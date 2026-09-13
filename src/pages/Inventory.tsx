@@ -30,6 +30,7 @@ function ProductForm({
     name: product?.name ?? "",
     type: product?.type ?? "Tablet",
     strength: product?.strength ?? "",
+    company: product?.company ?? "",
     purchasePrice: product ? product.purchasePriceCents / 100 : 0,
     salePrice: product ? product.salePriceCents / 100 : 0,
     discountType: product?.discountType ?? "percent",
@@ -98,7 +99,14 @@ function ProductForm({
               onChange={(e) => setForm({ ...form, strength: e.target.value })}
             />
           </Field>
-          <div />
+          <Field label="Company">
+            <input
+              maxLength={100}
+              placeholder="Medicine manufacturer"
+              value={form.company}
+              onChange={(e) => setForm({ ...form, company: e.target.value })}
+            />
+          </Field>
           {(["purchasePrice", "salePrice"] as const).map((key) => (
             <Field
               label={

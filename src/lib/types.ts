@@ -19,6 +19,7 @@ export interface User {
   permissions: string[];
 }
 export interface Product {
+  company?: string;
   _id: string;
   name: string;
   type: string;
@@ -51,6 +52,7 @@ export interface OrderItem {
   totalCents: number;
 }
 export interface Order {
+  remarks?: string;
   _id: string;
   invoiceNumber: string;
   customerId: string;
@@ -59,6 +61,8 @@ export interface Order {
   customerPhone: string;
   items: OrderItem[];
   subtotalCents: number;
+  profitCents?: number | null;
+  profitEstimated?: boolean;
   discountCents: number;
   totalCents: number;
   previousPendingCents: number;

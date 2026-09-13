@@ -92,6 +92,7 @@ export default function Orders() {
                       <th>Customer</th>
                       <th>Created</th>
                       <th>Order amount</th>
+                      <th>Profit so far</th>
                       <th>Remaining</th>
                       <th>Status</th>
                       <th />
@@ -111,6 +112,26 @@ export default function Orders() {
                         <td>{o.customerName}</td>
                         <td className="text-muted">{shortDate(o.createdAt)}</td>
                         <td className="font-semibold">{money(o.totalCents)}</td>
+                        <td>
+                          <span
+                            className={`badge ${o.profitCents == null ? "badge-partial" : o.profitCents < 0 ? "badge-pending" : "badge-paid"}`}
+                            title={
+                              o.profitEstimated
+                                ? "Estimated using current purchase prices because this older order has no saved purchase costs."
+                                : "Received payment minus this order's purchase cost. Negative amounts mean costs have not yet been recovered."
+                            }
+                          >
+                            <i />
+                            {o.profitCents == null
+                              ? "Unavailable"
+                              : `${o.profitEstimated ? "~ " : ""}${money(o.profitCents)}`}
+                          </span>
+                          {o.profitEstimated && o.profitCents != null && (
+                            <small className="block text-muted mt-1">
+                              Estimated
+                            </small>
+                          )}
+                        </td>
                         <td>{money(o.remainingCents)}</td>
                         <td>
                           <Badge status={o.status} />

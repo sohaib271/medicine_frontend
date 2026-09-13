@@ -82,6 +82,7 @@ function Editor({ order }: { order?: Order }) {
     order ? order.receivedCents / 100 : 0,
   );
   const [confirm, setConfirm] = useState(false);
+  const [remarks, setRemarks] = useState(order?.remarks ?? "");
   const customers = useQuery({
     queryKey: ["customers", "picker", customerDebounced],
     queryFn: () =>
@@ -154,6 +155,7 @@ function Editor({ order }: { order?: Order }) {
           ),
           receivedAmount: received,
           ...(order || mode === "existing" ? { billingDetails: billing } : {}),
+          remarks,
         }),
       ),
     onSuccess: async (result) => {
@@ -403,6 +405,17 @@ function Editor({ order }: { order?: Order }) {
                   {customer.error.message}
                 </p>
               )}
+              <div className="mt-4">
+                <Field label="Bill remarks">
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    placeholder="Optional notes to print on the bill"
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                  />
+                </Field>
+              </div>
               {(order || (mode === "existing" && customer.data)) && (
                 <div className="form-grid mt-4">
                   <Field label="Billing name">
