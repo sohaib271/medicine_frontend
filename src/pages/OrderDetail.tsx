@@ -151,6 +151,7 @@ export default function OrderDetail() {
               <thead>
                 <tr>
                   <th>Medicine</th>
+                  <th>Company</th>
                   <th>Qty</th>
                   <th>Unit price</th>
                   <th>Discount / unit</th>
@@ -166,6 +167,7 @@ export default function OrderDetail() {
                         {i.type} · {i.strength}
                       </small>
                     </td>
+                    <td>{i.company || "—"}</td>
                     <td>{i.quantity}</td>
                     <td>{money(i.unitPriceCents)}</td>
                     <td>
@@ -182,6 +184,10 @@ export default function OrderDetail() {
           <div className="invoice-bottom">
             <div className="invoice-note">
               <span className="eyebrow">THANK YOU FOR YOUR TRUST</span>
+              <p>
+                <strong>Remarks:</strong> {order.customerName}
+                {order.remarks?.trim() ? ` — ${order.remarks.trim()}` : ""}
+              </p>
               <p>
                 Previous pending is recorded when the bill is created. This
                 order’s status is based only on its own received payment.
