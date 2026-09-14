@@ -99,7 +99,7 @@ function ProductForm({
               onChange={(e) => setForm({ ...form, strength: e.target.value })}
             />
           </Field>
-          <Field label="Company">
+          <Field label="Add Company">
             <input
               maxLength={100}
               placeholder="Medicine manufacturer"

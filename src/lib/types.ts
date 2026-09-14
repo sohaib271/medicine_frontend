@@ -44,6 +44,7 @@ export interface OrderItem {
   name: string;
   type: string;
   strength: string;
+  company?: string;
   quantity: number;
   unitPriceCents: number;
   discountType: DiscountType;
