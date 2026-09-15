@@ -19,6 +19,42 @@ test("admin can manage medicines, create a bill, collect payment and delete it",
     path: "test-results/dashboard-desktop.png",
     fullPage: true,
   });
+  await page
+    .getByRole("link", { name: "Create delivery challan", exact: true })
+    .click();
+  await page.getByRole("button", { name: "New customer", exact: true }).click();
+  await page
+    .getByLabel("Customer name", { exact: true })
+    .fill("Challan Customer");
+  await page.getByLabel("Area / address").fill("Gujranwala");
+  await page
+    .getByLabel("Remarks", { exact: true })
+    .fill("Deliver to reception");
+  await page
+    .getByLabel("Product name", { exact: true })
+    .fill("Delivery Vitamin");
+  await page.getByLabel("Company name", { exact: true }).fill("Sample Pharma");
+  await page.getByLabel("Quantity", { exact: true }).fill("12");
+  await page.getByRole("button", { name: "Save challan" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  const challanRow = page
+    .getByRole("row")
+    .filter({ hasText: "Delivery Vitamin" });
+  await expect(challanRow).toContainText("pending");
+  await challanRow.getByRole("button", { name: /Edit DC-/ }).click();
+  await expect(page.getByLabel("Select customer")).toContainText(
+    "Challan Customer",
+  );
+  await expect(page.getByLabel("Area / address")).toHaveValue("Gujranwala");
+  await expect(
+    page.getByRole("textbox", { name: "Remarks", exact: true }),
+  ).toHaveValue("Deliver to reception");
+  await page.getByLabel("Delivery status").selectOption("delivered");
+  await page.getByRole("button", { name: "Save challan" }).click();
+  await expect(challanRow).toContainText("delivered");
+  const challanDownload = page.waitForEvent("download");
+  await challanRow.getByRole("button", { name: /Download DC-/ }).click();
+  expect((await challanDownload).suggestedFilename()).toMatch(/^DC-.*\.pdf$/);
   await page.getByRole("link", { name: "Inventory", exact: true }).click();
   await page.getByRole("button", { name: "Add medicine", exact: true }).click();
   await page.getByLabel("Medicine name").fill("Test Vitamin");

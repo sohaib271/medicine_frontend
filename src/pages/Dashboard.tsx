@@ -52,6 +52,12 @@ export default function Dashboard() {
         <Link to="/orders/new" className="btn btn-primary">
           <Plus size={17} /> Create order
         </Link>
+        <Link to="/challans?new=true" className="btn btn-secondary">
+          <Plus size={17} /> Create delivery challan
+        </Link>
+        <Link to="/challans" className="btn btn-secondary">
+          View challans
+        </Link>
       </PageHeader>
       <div className="welcome-banner">
         <div>

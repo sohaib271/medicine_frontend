@@ -10,6 +10,7 @@ import {
   Plus,
   ReceiptText,
   ShieldCheck,
+  Truck,
   Users,
   X,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const links = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/orders", label: "Orders & billing", icon: ReceiptText },
+  { to: "/challans", label: "Delivery challans", icon: Truck },
   { to: "/customers", label: "Customers", icon: Users },
 ];
 export function Layout({ user }: { user: User }) {

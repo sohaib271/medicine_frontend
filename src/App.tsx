@@ -12,6 +12,7 @@ const Customers = lazy(() => import("./pages/Customers"));
 const Orders = lazy(() => import("./pages/Orders"));
 const OrderEditor = lazy(() => import("./pages/OrderEditor"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const Challans = lazy(() => import("./pages/Challans"));
 export default function App() {
   const client = useQueryClient();
   const auth = useQuery({
@@ -53,6 +54,7 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="inventory" element={<Inventory />} />
+          <Route path="challans" element={<Challans />} />
           <Route path="customers" element={<Customers />} />
           <Route path="orders" element={<Orders />} />
           <Route path="orders/new" element={<OrderEditor />} />
