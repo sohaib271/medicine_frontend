@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -62,6 +62,10 @@ function Editor({ order }: { order?: Order }) {
   const refresh = useRefresh();
   const [requestId] = useState(() => crypto.randomUUID());
   const [lines, setLines] = useState<Line[]>(order?.items ?? []);
+  const selectedProductIds = useMemo(
+    () => new Set(lines.map((line) => line.productId)),
+    [lines],
+  );
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const [customerId, setCustomerId] = useState(order?.customerId ?? "");
   const [newCustomer, setNewCustomer] = useState({
@@ -118,15 +122,19 @@ function Editor({ order }: { order?: Order }) {
         `/products${queryString({ search: productDebounced, limit: 12 })}`,
       ),
   });
-  const subtotal = lines.reduce(
-    (sum, i) => sum + i.unitPriceCents * i.quantity,
-    0,
-  );
-  const total = lines.reduce(
-    (sum, i) =>
-      sum +
-      netPrice(i.unitPriceCents, i.discountType, i.discountValue) * i.quantity,
-    0,
+  const { subtotal, total } = useMemo(
+    () => {
+      let subtotal = 0;
+      let total = 0;
+      for (const line of lines) {
+        subtotal += line.unitPriceCents * line.quantity;
+        total +=
+          netPrice(line.unitPriceCents, line.discountType, line.discountValue) *
+          line.quantity;
+      }
+      return { subtotal, total };
+    },
+    [lines],
   );
   const previous =
     order?.previousPendingCents ??
@@ -169,7 +177,7 @@ function Editor({ order }: { order?: Order }) {
     },
   });
   function addProduct(product: Product) {
-    if (lines.some((i) => i.productId === product._id)) {
+    if (selectedProductIds.has(product._id)) {
       toast.info(
         "This medicine is already in the bill. Update its quantity below.",
       );
@@ -481,7 +489,7 @@ function Editor({ order }: { order?: Order }) {
                   />
                 ) : products.data.data.length ? (
                   products.data.data.map((p) => {
-                    const added = lines.some((l) => l.productId === p._id);
+                    const added = selectedProductIds.has(p._id);
                     return (
                       <button
                         type="button"
