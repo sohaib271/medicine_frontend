@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowUpRight, Plus, X } from "lucide-react";
-import { api, queryString } from "../lib/api";
-import { useDebounced } from "../lib/hooks";
+import { ArrowUpRight, Plus, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { api, body, queryString } from "../lib/api";
+import { useDebounced, useRefresh } from "../lib/hooks";
 import type { Order, Page } from "../lib/types";
 import { money, shortDate } from "../lib/format";
 import {
   Badge,
+  Confirm,
   Empty,
   ErrorState,
   Loading,
@@ -21,6 +23,8 @@ export default function Orders() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("");
+  const [deleting, setDeleting] = useState<Order | null>(null);
+  const refresh = useRefresh();
   const debounced = useDebounced(search);
   const query = useQuery({
     queryKey: ["orders", debounced, page, status, customerId],
@@ -29,6 +33,11 @@ export default function Orders() {
         `/orders${queryString({ search: debounced, page, status, customerId })}`,
       ),
     placeholderData: keepPreviousData,
+  });
+  const remove = useMutation({
+    mutationFn: (order: Order) => api(`/orders/${order._id}`, body("DELETE", { version: order.version })),
+    onSuccess: async () => { await refresh(); toast.success("Order deleted. Stock and balance restored."); setDeleting(null); },
+    onError: (e: Error) => toast.error(e.message),
   });
   return (
     <>
@@ -137,13 +146,14 @@ export default function Orders() {
                           <Badge status={o.status} />
                         </td>
                         <td>
-                          <Link
-                            className="icon-button"
-                            aria-label={`View ${o.invoiceNumber}`}
-                            to={`/orders/${o._id}`}
-                          >
-                            <ArrowUpRight size={17} />
-                          </Link>
+                          <div className="flex gap-2">
+                            <Link className="icon-button" aria-label={`View ${o.invoiceNumber}`} to={`/orders/${o._id}`}>
+                              <ArrowUpRight size={17} />
+                            </Link>
+                            <button className="icon-button text-red-600" aria-label={`Delete ${o.invoiceNumber}`} onClick={() => setDeleting(o)}>
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -173,6 +183,7 @@ export default function Orders() {
           </>
         )}
       </section>
+      {deleting && <Confirm title="Delete this order?" text="This removes the bill, restores its medicine quantities, and reverses its outstanding customer balance. Cash refunds must be handled separately." danger onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting)} pending={remove.isPending} />}
     </>
   );
 }

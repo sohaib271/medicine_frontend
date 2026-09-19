@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Pencil, Plus } from "lucide-react";
+import { ArrowUpRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api, body, queryString } from "../lib/api";
 import { useDebounced, useRefresh } from "../lib/hooks";
@@ -9,6 +9,7 @@ import type { Customer, Page } from "../lib/types";
 import { money } from "../lib/format";
 import {
   Button,
+  Confirm,
   Empty,
   ErrorState,
   Field,
@@ -112,6 +113,13 @@ export default function Customers() {
   const [editing, setEditing] = useState<Customer | null | undefined>(
     undefined,
   );
+  const [deleting, setDeleting] = useState<Customer | null>(null);
+  const refresh = useRefresh();
+  const remove = useMutation({
+    mutationFn: (customer: Customer) => api(`/customers/${customer._id}`, body("DELETE", {})),
+    onSuccess: async () => { await refresh(); toast.success("Customer deleted"); setDeleting(null); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const query = useQuery({
     queryKey: ["customers", debounced, page],
     queryFn: () =>
@@ -199,6 +207,9 @@ export default function Customers() {
                             >
                               Orders <ArrowUpRight size={15} />
                             </Link>
+                            <button className="icon-button text-red-600" aria-label={`Delete ${c.name}`} onClick={() => setDeleting(c)}>
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -232,6 +243,7 @@ export default function Customers() {
       {editing !== undefined && (
         <CustomerForm customer={editing} close={() => setEditing(undefined)} />
       )}
+      {deleting && <Confirm title="Delete this customer?" text={`${deleting.name} will be removed. Customers with an outstanding balance must be settled first.`} danger onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting)} pending={remove.isPending} />}
     </>
   );
 }

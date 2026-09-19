@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Pencil, Pill, Plus, TriangleAlert } from "lucide-react";
+import { Boxes, Pencil, Pill, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { api, body, queryString } from "../lib/api";
 import { useDebounced, useRefresh } from "../lib/hooks";
@@ -9,6 +9,7 @@ import { medicineTypes, type Page, type Product } from "../lib/types";
 import { money } from "../lib/format";
 import {
   Button,
+  Confirm,
   Empty,
   ErrorState,
   Field,
@@ -36,6 +37,9 @@ function ProductForm({
     discountType: product?.discountType ?? "percent",
     discountValue: product?.discountValue ?? 0,
     stock: product?.stock ?? 0,
+    packing: 0,
+    quantityPerPacking: product?.quantityPerPacking ?? 1,
+    alarmType: product?.alarmType ?? "quantity",
     alarmLimit: product?.alarmLimit ?? 10,
   });
   const save = useMutation({
@@ -44,6 +48,7 @@ function ProductForm({
         `/products${product ? `/${product._id}` : ""}`,
         body(product ? "PUT" : "POST", {
           ...form,
+          ...(product ? { packing: undefined } : { stock: undefined }),
           ...(product ? { version: product.version } : {}),
         }),
       ),
@@ -111,8 +116,8 @@ function ProductForm({
             <Field
               label={
                 key === "purchasePrice"
-                  ? "Purchase price (PKR)"
-                  : "Sale price (PKR)"
+                  ? "Purchase price per pack (PKR)"
+                  : "Sale price per pack (PKR)"
               }
               key={key}
             >
@@ -140,11 +145,11 @@ function ProductForm({
               }
             >
               <option value="percent">Percentage (%)</option>
-              <option value="fixed">Fixed amount (PKR / unit)</option>
+              <option value="fixed">Fixed amount (PKR / pack)</option>
             </select>
           </Field>
           <Field
-            label={`Discount ${form.discountType === "percent" ? "(%)" : "(PKR / unit)"}`}
+            label={`Discount ${form.discountType === "percent" ? "(%)" : "(PKR / pack)"}`}
           >
             <input
               required
@@ -158,26 +163,40 @@ function ProductForm({
               }
             />
           </Field>
-          {(["stock", "alarmLimit"] as const).map((key) => (
-            <Field
-              key={key}
-              label={
-                key === "stock" ? "Stock quantity" : "Low-stock alarm limit"
-              }
-            >
+          {!product && (
+            <Field label="Number of packings" hint="How many packs were received">
               <input
                 type="number"
                 required
                 min={0}
                 max={1000000}
                 step={1}
-                value={form[key]}
+                value={form.packing}
                 onChange={(e) =>
-                  setForm({ ...form, [key]: Number(e.target.value) })
+                  setForm({ ...form, packing: Number(e.target.value) })
                 }
               />
             </Field>
-          ))}
+          )}
+          <Field label="Quantity per packing" hint="Units in each pack (tablets, bottles, etc.)">
+            <input type="number" required min={1} max={1000000} step={1}
+              value={form.quantityPerPacking}
+              onChange={(e) => setForm({ ...form, quantityPerPacking: Number(e.target.value) })} />
+          </Field>
+          <Field label="Total quantity" hint={product ? "Current stock; use Update inventory to add arrivals" : "Packings × quantity per packing"}>
+            <input readOnly value={product ? form.stock : form.packing * form.quantityPerPacking} />
+          </Field>
+          <Field label="Alarm based on">
+            <select value={form.alarmType} onChange={(e) => setForm({ ...form, alarmType: e.target.value as "packing" | "quantity" })}>
+              <option value="packing">Number of packings</option>
+              <option value="quantity">Total quantity</option>
+            </select>
+          </Field>
+          <Field label={`Low-stock alarm (${form.alarmType === "packing" ? "packings" : "units"})`}>
+            <input type="number" required min={0} max={1000000} step={1}
+              value={form.alarmLimit}
+              onChange={(e) => setForm({ ...form, alarmLimit: Number(e.target.value) })} />
+          </Field>
         </div>
         <div className="modal-footer">
           <Button
@@ -200,6 +219,49 @@ function ProductForm({
     </Modal>
   );
 }
+
+function InventoryForm({ product, close }: { product: Product; close: () => void }) {
+  const refresh = useRefresh();
+  const [packing, setPacking] = useState(1);
+  const [quantityPerPacking, setQuantityPerPacking] = useState(product.quantityPerPacking ?? 1);
+  const added = packing * quantityPerPacking;
+  const save = useMutation({
+    mutationFn: () => api<Product>(`/products/${product._id}/inventory`, body("PATCH", {
+      packing, quantityPerPacking, version: product.version,
+    })),
+    onSuccess: async () => {
+      await refresh();
+      toast.success(`${added} units added to inventory`);
+      close();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <Modal title="Update inventory" subtitle={`Add newly arrived stock for ${product.name}.`} onClose={close}>
+      <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
+        <div className="modal-body form-grid">
+          <Field label="New packings received">
+            <input autoFocus type="number" required min={1} max={1000000} step={1} value={packing}
+              onChange={(e) => setPacking(Number(e.target.value))} />
+          </Field>
+          <Field label="Quantity per packing">
+            <input type="number" required min={1} max={1000000} step={1} value={quantityPerPacking}
+              onChange={(e) => setQuantityPerPacking(Number(e.target.value))} />
+          </Field>
+          <div className="inventory-calculation">
+            <span>{packing} × {quantityPerPacking}</span>
+            <strong>{added} units will be added</strong>
+            <small>New total: {product.stock + added} units</small>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <Button type="button" variant="secondary" disabled={save.isPending} onClick={close}>Cancel</Button>
+          <Button disabled={save.isPending}>{save.isPending ? "Updating…" : "Update inventory"}</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
 export default function Inventory() {
   const [params, setParams] = useSearchParams();
   const lowStock = params.get("lowStock") === "true";
@@ -207,6 +269,14 @@ export default function Inventory() {
   const [page, setPage] = useState(1);
   const debounced = useDebounced(search);
   const [editing, setEditing] = useState<Product | null | undefined>(undefined);
+  const [restocking, setRestocking] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState<Product | null>(null);
+  const refresh = useRefresh();
+  const remove = useMutation({
+    mutationFn: (product: Product) => api(`/products/${product._id}`, body("DELETE", { version: product.version })),
+    onSuccess: async () => { await refresh(); toast.success("Medicine deleted"); setDeleting(null); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const query = useQuery({
     queryKey: ["products", debounced, page, lowStock],
     queryFn: () =>
@@ -273,9 +343,9 @@ export default function Inventory() {
                     <tr>
                       <th>Medicine</th>
                       <th>Type</th>
-                      <th>Purchase price</th>
-                      <th>Sale price</th>
-                      <th>Discount / unit</th>
+                      <th>Purchase / pack</th>
+                      <th>Sale / pack</th>
+                      <th>Discount / pack</th>
                       <th>Stock</th>
                       <th />
                     </tr>
@@ -308,22 +378,31 @@ export default function Inventory() {
                         </td>
                         <td>
                           <span
-                            className={`stock-chip ${p.stock <= p.alarmLimit ? "low" : ""}`}
+                            className={`stock-chip ${p.stock <= p.alarmLimit * (p.alarmType === "packing" ? (p.quantityPerPacking ?? 1) : 1) ? "low" : ""}`}
                           >
                             <i />
                             {p.stock} units
                           </span>
                           <small className="block text-muted mt-1">
-                            Alarm at {p.alarmLimit}
+                            {Math.floor(p.stock / (p.quantityPerPacking ?? 1))} packs · {p.quantityPerPacking ?? 1} per pack
+                          </small>
+                          <small className="block text-muted mt-1">
+                            Alarm at {p.alarmLimit} {p.alarmType === "packing" ? "packs" : "units"}
                           </small>
                         </td>
                         <td>
+                          <button className="icon-button" aria-label={`Update inventory for ${p.name}`} title="Update inventory" onClick={() => setRestocking(p)}>
+                            <Boxes size={16} />
+                          </button>
                           <button
                             className="icon-button"
                             aria-label={`Edit ${p.name}`}
                             onClick={() => setEditing(p)}
                           >
                             <Pencil size={16} />
+                          </button>
+                          <button className="icon-button text-red-600" aria-label={`Delete ${p.name}`} onClick={() => setDeleting(p)}>
+                            <Trash2 size={16} />
                           </button>
                         </td>
                       </tr>
@@ -361,6 +440,8 @@ export default function Inventory() {
       {editing !== undefined && (
         <ProductForm product={editing} close={() => setEditing(undefined)} />
       )}
+      {restocking && <InventoryForm product={restocking} close={() => setRestocking(null)} />}
+      {deleting && <Confirm title="Delete this medicine?" text={`${deleting.name} will be removed from inventory. Existing invoices will remain unchanged.`} danger onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting)} pending={remove.isPending} />}
     </>
   );
 }

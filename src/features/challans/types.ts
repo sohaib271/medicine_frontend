@@ -3,6 +3,8 @@ export interface ChallanItem {
   strength?: string;
   type: string;
   quantity: number;
+  packs: number;
+  piecesPerPack: number;
   company: string;
 }
 export interface Challan {

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Download, Pencil, Plus, Truck } from "lucide-react";
+import { Download, Pencil, Plus, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
-import { api, queryString } from "../lib/api";
+import { api, body, queryString } from "../lib/api";
 import { dateTime } from "../lib/format";
 import { useDebounced } from "../lib/hooks";
 import type { Page } from "../lib/types";
@@ -11,6 +11,7 @@ import type { Challan } from "../features/challans/types";
 import { ChallanForm } from "../features/challans/ChallanForm";
 import {
   Button,
+  Confirm,
   Empty,
   ErrorState,
   Loading,
@@ -26,6 +27,7 @@ export default function Challans() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
+  const [deleting, setDeleting] = useState<Challan | null>(null);
   const debounced = useDebounced(search);
   const query = useQuery({
     queryKey: ["challans", page, status, debounced],
@@ -51,6 +53,11 @@ export default function Challans() {
       anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const remove = useMutation({
+    mutationFn: (challan: Challan) => api(`/challans/${challan._id}`, body("DELETE", { version: challan.version })),
+    onSuccess: async () => { await query.refetch(); toast.success("Delivery challan deleted"); setDeleting(null); },
     onError: (error: Error) => toast.error(error.message),
   });
   return (
@@ -162,6 +169,9 @@ export default function Challans() {
                             >
                               <Download size={16} />
                             </button>
+                            <button className="icon-button text-red-600" aria-label={`Delete ${challan.challanNumber}`} onClick={() => setDeleting(challan)}>
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -197,6 +207,7 @@ export default function Challans() {
           }}
         />
       )}
+      {deleting && <Confirm title="Delete this delivery challan?" text={`${deleting.challanNumber} will be removed from the challan list.`} danger onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting)} pending={remove.isPending} />}
     </>
   );
 }

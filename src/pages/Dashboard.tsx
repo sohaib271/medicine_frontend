@@ -191,7 +191,10 @@ export default function Dashboard() {
                     </small>
                   </div>
                   <span className="stock-level">
-                    {p.stock} left<small>Min. {p.alarmLimit}</small>
+                    {p.stock} left
+                    <small>
+                      Min. {p.alarmLimit} {p.alarmType === "packing" ? "packs" : "units"}
+                    </small>
                   </span>
                 </Link>
               ))}

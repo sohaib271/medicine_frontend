@@ -13,6 +13,8 @@ const emptyItem = (): ChallanItem => ({
   strength: "",
   type: "Tablet",
   quantity: 1,
+  packs: 1,
+  piecesPerPack: 1,
   company: "",
 });
 export function ChallanForm({
@@ -23,7 +25,11 @@ export function ChallanForm({
   close: () => void;
 }) {
   const [items, setItems] = useState<ChallanItem[]>(
-    challan?.items ?? [emptyItem()],
+    challan?.items.map((item) => ({
+      ...item,
+      packs: item.packs ?? item.quantity,
+      piecesPerPack: item.piecesPerPack ?? 1,
+    })) ?? [emptyItem()],
   );
   const [status, setStatus] = useState<Challan["status"]>(
     challan?.status ?? "pending",
@@ -258,18 +264,40 @@ export function ChallanForm({
                     onChange={(e) => update(i, { strength: e.target.value })}
                   />
                 </Field>
-                <Field label="Quantity">
+                <Field label="Packs">
                   <input
                     required
                     type="number"
                     min={1}
                     max={1000000}
                     step={1}
-                    value={item.quantity}
+                    value={item.packs}
                     onChange={(e) =>
-                      update(i, { quantity: Number(e.target.value) })
+                      update(i, {
+                        packs: Number(e.target.value),
+                        quantity: Number(e.target.value) * item.piecesPerPack,
+                      })
                     }
                   />
+                </Field>
+                <Field label="Pieces per pack">
+                  <input
+                    required
+                    type="number"
+                    min={1}
+                    max={1000000}
+                    step={1}
+                    value={item.piecesPerPack}
+                    onChange={(e) =>
+                      update(i, {
+                        piecesPerPack: Number(e.target.value),
+                        quantity: item.packs * Number(e.target.value),
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Total pieces">
+                  <input readOnly value={item.packs * item.piecesPerPack} />
                 </Field>
               </div>
               <Button

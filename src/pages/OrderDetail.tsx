@@ -152,9 +152,10 @@ export default function OrderDetail() {
                 <tr>
                   <th>Medicine</th>
                   <th>Company</th>
-                  <th>Qty</th>
-                  <th>Unit price</th>
-                  <th>Discount / unit</th>
+                  <th>Pieces / pack</th>
+                  <th>Packs</th>
+                  <th>Price / pack</th>
+                  <th>Discount / pack</th>
                   <th>Amount</th>
                 </tr>
               </thead>
@@ -168,6 +169,7 @@ export default function OrderDetail() {
                       </small>
                     </td>
                     <td>{i.company || "—"}</td>
+                    <td>{i.quantityPerPacking ?? 1}</td>
                     <td>{i.quantity}</td>
                     <td>{money(i.unitPriceCents)}</td>
                     <td>

@@ -39,6 +39,7 @@ type Line = Pick<
   | "name"
   | "strength"
   | "quantity"
+  | "quantityPerPacking"
   | "unitPriceCents"
   | "discountType"
   | "discountValue"
@@ -194,6 +195,7 @@ function Editor({ order }: { order?: Order }) {
         name: product.name,
         strength: product.strength,
         quantity: 1,
+        quantityPerPacking: product.quantityPerPacking ?? 1,
         unitPriceCents: product.salePriceCents,
         discountType: product.discountType,
         discountValue: product.discountValue,
@@ -495,17 +497,20 @@ function Editor({ order }: { order?: Order }) {
                         type="button"
                         key={p._id}
                         className={`picker-item ${added ? "added" : ""}`}
-                        disabled={added || p.stock === 0}
+                        disabled={
+                          added ||
+                          p.stock < (p.quantityPerPacking ?? 1)
+                        }
                         onClick={() => addProduct(p)}
                       >
                         <div>
                           <strong>{p.name}</strong>
                           <small>
-                            {p.strength} · {p.stock} in stock
+                            {p.strength} · {Math.floor(p.stock / (p.quantityPerPacking ?? 1))} packs available
                           </small>
                         </div>
                         <span>
-                          {money(p.salePriceCents)}
+                          {money(p.salePriceCents)} / pack
                           {added ? <Check size={17} /> : <Plus size={17} />}
                         </span>
                       </button>
@@ -528,7 +533,7 @@ function Editor({ order }: { order?: Order }) {
                   <span className="count-tag ml-2">{lines.length}</span>
                 </h2>
                 <p>
-                  Discounts apply to each unit, before multiplying by quantity.
+                  Discounts apply to each pack, before multiplying by pack quantity.
                 </p>
               </div>
             </div>
@@ -543,7 +548,7 @@ function Editor({ order }: { order?: Order }) {
                       <div>
                         <strong>{line.name}</strong>
                         <small>
-                          {line.strength} · {money(line.unitPriceCents)} / unit
+                          {line.strength} · {money(line.unitPriceCents)} / pack · {line.quantityPerPacking} units per pack
                         </small>
                       </div>
                       <button
@@ -558,7 +563,7 @@ function Editor({ order }: { order?: Order }) {
                       </button>
                     </div>
                     <div className="line-fields">
-                      <Field label="Quantity">
+                      <Field label="Number of packs">
                         <input
                           type="number"
                           required
@@ -591,7 +596,7 @@ function Editor({ order }: { order?: Order }) {
                         label={
                           line.discountType === "percent"
                             ? "Discount (%)"
-                            : "Discount / unit"
+                            : "Discount / pack"
                         }
                       >
                         <input

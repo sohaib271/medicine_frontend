@@ -29,6 +29,8 @@ export interface Product {
   discountType: DiscountType;
   discountValue: number;
   stock: number;
+  quantityPerPacking: number;
+  alarmType: "packing" | "quantity";
   alarmLimit: number;
   version: number;
 }
@@ -46,6 +48,7 @@ export interface OrderItem {
   strength: string;
   company?: string;
   quantity: number;
+  quantityPerPacking: number;
   unitPriceCents: number;
   discountType: DiscountType;
   discountValue: number;
