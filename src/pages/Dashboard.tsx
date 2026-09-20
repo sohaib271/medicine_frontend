@@ -76,6 +76,44 @@ export default function Dashboard() {
           <span>INVENTORY. SIMPLIFIED.</span>
         </div>
       </div>
+      <section className="inventory-analytics" aria-labelledby="inventory-analytics-title">
+        <div className="analytics-heading">
+          <div>
+            <h2 id="inventory-analytics-title">Inventory performance</h2>
+            <p>Lifetime figures from active invoices</p>
+          </div>
+          <Link to="/inventory" className="text-link">
+            View product details <ArrowUpRight size={16} />
+          </Link>
+        </div>
+        <div className="analytics-grid">
+          <div className="stat-card">
+            <div className="stat-top"><span>Cost of current stock</span><span className="stat-icon blue"><Package size={19} /></span></div>
+            <strong>{money(data.stockCostCents)}</strong>
+            <small>Purchase value of inventory on hand</small>
+          </div>
+          <div className="stat-card">
+            <div className="stat-top"><span>Sold so far</span><span className="stat-icon green"><CircleDollarSign size={19} /></span></div>
+            <strong>{money(data.lifetimeSalesCents)}</strong>
+            <small>{data.soldPacks.toLocaleString()} packs · {data.soldUnits.toLocaleString()} units</small>
+          </div>
+          <div className="stat-card">
+            <div className="stat-top"><span>Sales profit · all time</span><span className="stat-icon purple"><ArrowUpRight size={19} /></span></div>
+            <strong>{data.profitEstimated ? "~ " : ""}{money(data.netProfitCents)}</strong>
+            <small>This month: {money(data.monthlyProfitCents)}</small>
+          </div>
+          <div className="stat-card">
+            <div className="stat-top"><span>Expenses · all time</span><span className="stat-icon orange"><ReceiptText size={19} /></span></div>
+            <strong>{money(data.expenseCents)}</strong>
+            <small>This month: {money(data.monthlyExpenseCents)}</small>
+          </div>
+          <div className="stat-card">
+            <div className="stat-top"><span>Profit after expenses</span><span className="stat-icon green"><CircleDollarSign size={19} /></span></div>
+            <strong>{data.profitEstimated ? "~ " : ""}{money(data.profitAfterExpenseCents)}</strong>
+            <small>This month: {money(data.monthlyProfitAfterExpenseCents)}</small>
+          </div>
+        </div>
+      </section>
       <div className="stats-grid">
         {[
           {

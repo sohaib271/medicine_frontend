@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   Truck,
   Users,
+  WalletCards,
+  FileChartColumn,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -24,6 +26,8 @@ const links = [
   { to: "/orders", label: "Orders & billing", icon: ReceiptText },
   { to: "/challans", label: "Delivery challans", icon: Truck },
   { to: "/customers", label: "Customers", icon: Users },
+  { to: "/expenses", label: "Expenses", icon: WalletCards },
+  { to: "/reports", label: "Reports", icon: FileChartColumn },
 ];
 export function Layout({ user }: { user: User }) {
   const [open, setOpen] = useState(false);

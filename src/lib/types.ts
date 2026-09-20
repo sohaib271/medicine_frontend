@@ -33,6 +33,12 @@ export interface Product {
   alarmType: "packing" | "quantity";
   alarmLimit: number;
   version: number;
+  stockCostCents?: number;
+  packsSold?: number;
+  unitsSold?: number;
+  salesCents?: number;
+  netProfitCents?: number;
+  profitEstimated?: boolean;
 }
 export interface Customer {
   _id: string;
@@ -98,4 +104,40 @@ export interface Dashboard {
   lowStock: Product[];
   recentOrders: Order[];
   trend: { _id: string; total: number }[];
+  stockCostCents: number;
+  lifetimeSalesCents: number;
+  soldPacks: number;
+  soldUnits: number;
+  netProfitCents: number;
+  profitEstimated: boolean;
+  expenseCents: number;
+  monthlyExpenseCents: number;
+  monthlyProfitCents: number;
+  monthlyProfitAfterExpenseCents: number;
+  profitAfterExpenseCents: number;
+}
+export interface Expense {
+  _id: string;
+  date: string;
+  category: string;
+  description: string;
+  amountCents: number;
+}
+export interface ExpensePage extends Page<Expense> { amountCents: number }
+export interface ReportMetrics {
+  packsSold: number;
+  unitsSold: number;
+  salesCents: number;
+  stockSpentCents: number;
+  profitCents: number;
+  profitEstimated: boolean;
+  expenseCents: number;
+  profitAfterExpenseCents: number;
+  stockLeftCents?: number;
+}
+export interface BusinessReport {
+  from: string;
+  to: string;
+  lifetime: ReportMetrics;
+  period: ReportMetrics;
 }

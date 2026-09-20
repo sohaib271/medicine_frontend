@@ -1,8 +1,12 @@
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  productIds?: string[];
+  constructor(message: string, status: number, details?: { code?: string; productIds?: string[] }) {
     super(message);
     this.status = status;
+    this.code = details?.code;
+    this.productIds = details?.productIds;
   }
 }
 export async function api<T>(
@@ -23,6 +27,8 @@ export async function api<T>(
       .json()
       .catch(() => ({ message: "Server unavailable. Please try again." }))) as {
       message?: string | string[];
+      code?: string;
+      productIds?: string[];
     };
     if (
       response.status === 401 &&
@@ -35,6 +41,7 @@ export async function api<T>(
         ? body.message.join(" ")
         : body.message || "Something went wrong.",
       response.status,
+      body,
     );
   }
   return response.json() as Promise<T>;
@@ -58,6 +65,18 @@ export async function downloadInvoice(id: string, filename: string) {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = `${filename}.pdf`;
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+export async function downloadReport(from: string, to: string) {
+  const res = await fetch(`/api/reports/pdf?${new URLSearchParams({ from, to })}`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Could not download the report. Please try again.");
+  const url = URL.createObjectURL(await res.blob());
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `report-${from}-to-${to}.pdf`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

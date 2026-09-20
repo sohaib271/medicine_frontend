@@ -949,6 +949,66 @@ tbody tr:hover {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
+.inventory-analytics {
+  margin-bottom: 24px;
+}
+.analytics-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.analytics-heading h2 {
+  color: #405c34;
+  font-size: 15px;
+}
+.analytics-heading p {
+  color: #99a190;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.report-filter {
+  margin-bottom: 20px;
+  padding: 18px 22px;
+}
+.report-filter form {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+}
+.report-filter .field {
+  min-width: 180px;
+}
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.report-rows {
+  padding: 4px 22px 18px;
+}
+.report-rows .summary-row {
+  padding: 13px 0;
+  border-bottom: 1px solid #edf1e8;
+}
+.report-note {
+  margin: 0 22px 20px;
+  color: #947744;
+  font-size: 10px;
+}
+.profit-value {
+  color: #5d873f;
+  font-weight: 650;
+}
+.profit-value.negative {
+  color: #b24738;
+}
 .inventory-calculation {
   grid-column: 1 / -1;
   display: flex;
@@ -1166,6 +1226,19 @@ tbody tr:hover {
 .order-line {
   padding: 19px 23px;
   border-top: 1px solid #edf1e2;
+}
+.order-line.insufficient-stock {
+  background: #fff7f3;
+  box-shadow: inset 3px 0 #c65d49;
+}
+.order-line.insufficient-stock input[type="number"] {
+  border-color: #c65d49;
+}
+.stock-error {
+  margin: 12px 0 0 43px;
+  color: #a94738;
+  font-size: 11px;
+  font-weight: 600;
 }
 .line-title {
   display: flex;
@@ -1562,6 +1635,12 @@ tbody tr:hover {
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
   .stat-card > strong {
     font-size: 24px;
   }
@@ -1605,6 +1684,15 @@ tbody tr:hover {
   }
   .login-form-side {
     padding: 30px;
+  }
+}
+@media (max-width: 600px) {
+  .report-filter form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .report-filter .field {
+    width: 100%;
   }
 }
 @media (max-width: 700px) {

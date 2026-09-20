@@ -222,26 +222,35 @@ function ProductForm({
 
 function InventoryForm({ product, close }: { product: Product; close: () => void }) {
   const refresh = useRefresh();
+  const [operation, setOperation] = useState<"add" | "remove">("add");
   const [packing, setPacking] = useState(1);
   const [quantityPerPacking, setQuantityPerPacking] = useState(product.quantityPerPacking ?? 1);
-  const added = packing * quantityPerPacking;
+  const changed = packing * quantityPerPacking;
+  const removing = operation === "remove";
+  const newTotal = product.stock + (removing ? -changed : changed);
   const save = useMutation({
     mutationFn: () => api<Product>(`/products/${product._id}/inventory`, body("PATCH", {
-      packing, quantityPerPacking, version: product.version,
+      operation, packing, quantityPerPacking, version: product.version,
     })),
     onSuccess: async () => {
       await refresh();
-      toast.success(`${added} units added to inventory`);
+      toast.success(`${changed} units ${removing ? "removed from" : "added to"} inventory`);
       close();
     },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
-    <Modal title="Update inventory" subtitle={`Add newly arrived stock for ${product.name}.`} onClose={close}>
+    <Modal title="Update inventory" subtitle={`Adjust stock for ${product.name}.`} onClose={close}>
       <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
         <div className="modal-body form-grid">
-          <Field label="New packings received">
-            <input autoFocus type="number" required min={1} max={1000000} step={1} value={packing}
+          <Field label="Adjustment type">
+            <select autoFocus value={operation} onChange={(e) => setOperation(e.target.value as "add" | "remove")}>
+              <option value="add">Add stock</option>
+              <option value="remove">Remove stock</option>
+            </select>
+          </Field>
+          <Field label={removing ? "Packings to remove" : "New packings received"}>
+            <input type="number" required min={1} max={1000000} step={1} value={packing}
               onChange={(e) => setPacking(Number(e.target.value))} />
           </Field>
           <Field label="Quantity per packing">
@@ -250,13 +259,13 @@ function InventoryForm({ product, close }: { product: Product; close: () => void
           </Field>
           <div className="inventory-calculation">
             <span>{packing} × {quantityPerPacking}</span>
-            <strong>{added} units will be added</strong>
-            <small>New total: {product.stock + added} units</small>
+            <strong>{changed} units will be {removing ? "removed" : "added"}</strong>
+            <small>New total: {newTotal} units</small>
           </div>
         </div>
         <div className="modal-footer">
           <Button type="button" variant="secondary" disabled={save.isPending} onClick={close}>Cancel</Button>
-          <Button disabled={save.isPending}>{save.isPending ? "Updating…" : "Update inventory"}</Button>
+          <Button disabled={save.isPending || newTotal < 0}>{save.isPending ? "Updating…" : "Update inventory"}</Button>
         </div>
       </form>
     </Modal>
@@ -347,6 +356,10 @@ export default function Inventory() {
                       <th>Sale / pack</th>
                       <th>Discount / pack</th>
                       <th>Stock</th>
+                      <th>Stock cost</th>
+                      <th>Sold so far</th>
+                      <th>Sales</th>
+                      <th>Net profit</th>
                       <th />
                     </tr>
                   </thead>
@@ -389,6 +402,18 @@ export default function Inventory() {
                           <small className="block text-muted mt-1">
                             Alarm at {p.alarmLimit} {p.alarmType === "packing" ? "packs" : "units"}
                           </small>
+                        </td>
+                        <td className="font-semibold">{money(p.stockCostCents ?? 0)}</td>
+                        <td>
+                          <strong>{(p.packsSold ?? 0).toLocaleString()} packs</strong>
+                          <small className="block text-muted mt-1">{(p.unitsSold ?? 0).toLocaleString()} units</small>
+                        </td>
+                        <td className="font-semibold">{money(p.salesCents ?? 0)}</td>
+                        <td>
+                          <span className={`profit-value ${(p.netProfitCents ?? 0) < 0 ? "negative" : ""}`}>
+                            {p.profitEstimated ? "~ " : ""}{money(p.netProfitCents ?? 0)}
+                          </span>
+                          {p.profitEstimated && <small className="block text-muted mt-1">Estimated</small>}
                         </td>
                         <td>
                           <button className="icon-button" aria-label={`Update inventory for ${p.name}`} title="Update inventory" onClick={() => setRestocking(p)}>

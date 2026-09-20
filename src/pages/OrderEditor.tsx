@@ -12,7 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
-import { api, body, queryString } from "../lib/api";
+import { ApiError, api, body, queryString } from "../lib/api";
 import { useDebounced, useRefresh } from "../lib/hooks";
 import { money, netPrice } from "../lib/format";
 import type {
@@ -87,6 +87,7 @@ function Editor({ order }: { order?: Order }) {
     order ? order.receivedCents / 100 : 0,
   );
   const [confirm, setConfirm] = useState(false);
+  const [insufficientProductIds, setInsufficientProductIds] = useState<Set<string>>(new Set());
   const [remarks, setRemarks] = useState(order?.remarks ?? "");
   const customers = useQuery({
     queryKey: ["customers", "picker", customerDebounced],
@@ -168,12 +169,16 @@ function Editor({ order }: { order?: Order }) {
         }),
       ),
     onSuccess: async (result) => {
+      setInsufficientProductIds(new Set());
       await refresh();
       toast.success(order ? "Order updated" : "Order created");
       navigate(`/orders/${result._id}`);
     },
     onError: (e: Error) => {
       setConfirm(false);
+      setInsufficientProductIds(
+        new Set(e instanceof ApiError ? (e.productIds ?? []) : []),
+      );
       toast.error(e.message);
     },
   });
@@ -203,6 +208,14 @@ function Editor({ order }: { order?: Order }) {
     ]);
   }
   function updateLine(index: number, changes: Partial<Line>) {
+    const productId = lines[index].productId;
+    if (insufficientProductIds.has(productId)) {
+      setInsufficientProductIds((current) => {
+        const next = new Set(current);
+        next.delete(productId);
+        return next;
+      });
+    }
     setLines(
       lines.map((line, i) => (i === index ? { ...line, ...changes } : line)),
     );
@@ -539,8 +552,10 @@ function Editor({ order }: { order?: Order }) {
             </div>
             {lines.length ? (
               <div className="order-lines">
-                {lines.map((line, index) => (
-                  <div className="order-line" key={line.productId}>
+                {lines.map((line, index) => {
+                  const insufficient = insufficientProductIds.has(line.productId);
+                  return (
+                  <div className={`order-line ${insufficient ? "insufficient-stock" : ""}`} key={line.productId}>
                     <div className="line-title">
                       <span className="line-number">
                         {String(index + 1).padStart(2, "0")}
@@ -630,8 +645,14 @@ function Editor({ order }: { order?: Order }) {
                         </strong>
                       </div>
                     </div>
+                    {insufficient && (
+                      <p role="alert" className="stock-error">
+                        Not enough stock is available for this medicine. Reduce the number of packs and try again.
+                      </p>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <Empty
