@@ -106,6 +106,7 @@ export interface Dashboard {
   trend: { _id: string; total: number }[];
   stockCostCents: number;
   lifetimeSalesCents: number;
+  lifetimeReceivedCents: number;
   soldPacks: number;
   soldUnits: number;
   netProfitCents: number;

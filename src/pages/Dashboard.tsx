@@ -98,6 +98,11 @@ export default function Dashboard() {
             <small>{data.soldPacks.toLocaleString()} packs · {data.soldUnits.toLocaleString()} units</small>
           </div>
           <div className="stat-card">
+            <div className="stat-top"><span>Amount received · all time</span><span className="stat-icon blue"><ReceiptText size={19} /></span></div>
+            <strong>{money(data.lifetimeReceivedCents)}</strong>
+            <small>Payments collected on active invoices</small>
+          </div>
+          <div className="stat-card">
             <div className="stat-top"><span>Sales profit · all time</span><span className="stat-icon purple"><ArrowUpRight size={19} /></span></div>
             <strong>{data.profitEstimated ? "~ " : ""}{money(data.netProfitCents)}</strong>
             <small>This month: {money(data.monthlyProfitCents)}</small>
