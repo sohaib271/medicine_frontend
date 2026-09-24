@@ -156,9 +156,10 @@ function Editor({ order }: { order?: Order }) {
                   : { customer: newCustomer }),
               }),
           items: lines.map(
-            ({ productId, quantity, discountType, discountValue }) => ({
+            ({ productId, quantity, unitPriceCents, discountType, discountValue }) => ({
               productId,
               quantity,
+              salePrice: unitPriceCents / 100,
               discountType,
               discountValue,
             }),
@@ -235,6 +236,8 @@ function Editor({ order }: { order?: Order }) {
         (l) =>
           l.quantity < 1 ||
           !Number.isInteger(l.quantity) ||
+          l.unitPriceCents < 0 ||
+          !Number.isInteger(l.unitPriceCents) ||
           l.discountValue < 0 ||
           netPrice(l.unitPriceCents, l.discountType, l.discountValue) < 0 ||
           (l.discountType === "percent" && l.discountValue > 100),
@@ -589,6 +592,21 @@ function Editor({ order }: { order?: Order }) {
                           onChange={(e) =>
                             updateLine(index, {
                               quantity: Number(e.target.value),
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field label="Sale price / pack (PKR)">
+                        <input
+                          type="number"
+                          required
+                          min={0}
+                          max={10000000}
+                          step="0.01"
+                          value={line.unitPriceCents / 100}
+                          onChange={(e) =>
+                            updateLine(index, {
+                              unitPriceCents: Math.round(Number(e.target.value) * 100),
                             })
                           }
                         />
