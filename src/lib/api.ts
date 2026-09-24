@@ -9,11 +9,18 @@ export class ApiError extends Error {
     this.productIds = details?.productIds;
   }
 }
+
+const API_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
+export function apiUrl(path: string) {
+  return `${API_URL}/api${path}`;
+}
+
 export async function api<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...options,
     credentials: "include",
     headers: {
@@ -59,7 +66,7 @@ export function queryString(
   return `?${query}`;
 }
 export async function downloadInvoice(id: string, filename: string) {
-  const res = await fetch(`/api/orders/${id}/pdf`, { credentials: "include" });
+  const res = await fetch(apiUrl(`/orders/${id}/pdf`), { credentials: "include" });
   if (!res.ok) throw new Error("Could not download invoice. Please try again.");
   const url = URL.createObjectURL(await res.blob());
   const anchor = document.createElement("a");
@@ -69,7 +76,7 @@ export async function downloadInvoice(id: string, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export async function downloadReport(from: string, to: string) {
-  const res = await fetch(`/api/reports/pdf?${new URLSearchParams({ from, to })}`, {
+  const res = await fetch(apiUrl(`/reports/pdf?${new URLSearchParams({ from, to })}`), {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Could not download the report. Please try again.");

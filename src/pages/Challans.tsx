@@ -3,7 +3,7 @@ import { useMutation, useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Download, Pencil, Plus, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
-import { api, body, queryString } from "../lib/api";
+import { api, apiUrl, body, queryString } from "../lib/api";
 import { dateTime } from "../lib/format";
 import { useDebounced } from "../lib/hooks";
 import type { Page } from "../lib/types";
@@ -39,7 +39,7 @@ export default function Challans() {
   });
   const download = useMutation({
     mutationFn: async (challan: Challan) => {
-      const response = await fetch(`/api/challans/${challan._id}/pdf`, {
+      const response = await fetch(apiUrl(`/challans/${challan._id}/pdf`), {
         credentials: "include",
       });
       if (!response.ok)
