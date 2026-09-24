@@ -2,7 +2,11 @@ export class ApiError extends Error {
   status: number;
   code?: string;
   productIds?: string[];
-  constructor(message: string, status: number, details?: { code?: string; productIds?: string[] }) {
+  constructor(
+    message: string,
+    status: number,
+    details?: { code?: string; productIds?: string[] },
+  ) {
     super(message);
     this.status = status;
     this.code = details?.code;
@@ -66,8 +70,15 @@ export function queryString(
   return `?${query}`;
 }
 export async function downloadInvoice(id: string, filename: string) {
-  const res = await fetch(apiUrl(`/orders/${id}/pdf`), { credentials: "include" });
-  if (!res.ok) throw new Error("Could not download invoice. Please try again.");
+  const res = await fetch(apiUrl(`/orders/${id}/pdf`), {
+    credentials: "include",
+  });
+  if (!res.ok)
+    throw new Error(
+      res.status === 401
+        ? "Your session was not accepted by the API. Sign in again and check that cross-site cookies are allowed."
+        : `Could not download invoice (HTTP ${res.status}). Please try again.`,
+    );
   const url = URL.createObjectURL(await res.blob());
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -76,10 +87,14 @@ export async function downloadInvoice(id: string, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export async function downloadReport(from: string, to: string) {
-  const res = await fetch(apiUrl(`/reports/pdf?${new URLSearchParams({ from, to })}`), {
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Could not download the report. Please try again.");
+  const res = await fetch(
+    apiUrl(`/reports/pdf?${new URLSearchParams({ from, to })}`),
+    {
+      credentials: "include",
+    },
+  );
+  if (!res.ok)
+    throw new Error("Could not download the report. Please try again.");
   const url = URL.createObjectURL(await res.blob());
   const anchor = document.createElement("a");
   anchor.href = url;
