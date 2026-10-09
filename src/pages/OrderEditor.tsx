@@ -86,6 +86,9 @@ function Editor({ order }: { order?: Order }) {
   const [received, setReceived] = useState(
     order ? order.receivedCents / 100 : 0,
   );
+  const [overallDiscount, setOverallDiscount] = useState(
+    order ? (order.overallDiscountCents ?? 0) / 100 : 0,
+  );
   const [confirm, setConfirm] = useState(false);
   const [insufficientProductIds, setInsufficientProductIds] = useState<Set<string>>(new Set());
   const [remarks, setRemarks] = useState(order?.remarks ?? "");
@@ -124,7 +127,7 @@ function Editor({ order }: { order?: Order }) {
         `/products${queryString({ search: productDebounced, limit: 12 })}`,
       ),
   });
-  const { subtotal, total } = useMemo(
+  const { subtotal, itemTotal } = useMemo(
     () => {
       let subtotal = 0;
       let total = 0;
@@ -134,10 +137,12 @@ function Editor({ order }: { order?: Order }) {
           netPrice(line.unitPriceCents, line.discountType, line.discountValue) *
           line.quantity;
       }
-      return { subtotal, total };
+      return { subtotal, itemTotal: total };
     },
     [lines],
   );
+  const overallDiscountCents = Math.round(overallDiscount * 100);
+  const total = itemTotal - overallDiscountCents;
   const previous =
     order?.previousPendingCents ??
     (mode === "existing" ? (customer.data?.balanceCents ?? 0) : 0);
@@ -165,6 +170,7 @@ function Editor({ order }: { order?: Order }) {
             }),
           ),
           receivedAmount: received,
+          overallDiscount,
           ...(order || mode === "existing" ? { billingDetails: billing } : {}),
           remarks,
         }),
@@ -244,6 +250,14 @@ function Editor({ order }: { order?: Order }) {
       )
     ) {
       toast.error("Check medicine quantities and discounts.");
+      return;
+    }
+    if (
+      overallDiscountCents < 0 ||
+      !Number.isInteger(overallDiscountCents) ||
+      overallDiscountCents > itemTotal
+    ) {
+      toast.error("Overall discount cannot exceed the order amount.");
       return;
     }
     if (receivedCents < 0 || receivedCents > total) {
@@ -692,9 +706,26 @@ function Editor({ order }: { order?: Order }) {
               <strong>{money(subtotal)}</strong>
             </div>
             <div className="summary-row">
-              <span>Discount</span>
+              <span>Item discounts</span>
               <strong className="text-emerald-700">
-                − {money(subtotal - total)}
+                − {money(subtotal - itemTotal)}
+              </strong>
+            </div>
+            <Field label="Overall discount (PKR)">
+              <input
+                type="number"
+                required
+                min={0}
+                max={Math.max(0, itemTotal / 100)}
+                step="0.01"
+                value={overallDiscount}
+                onChange={(e) => setOverallDiscount(Number(e.target.value))}
+              />
+            </Field>
+            <div className="summary-row">
+              <span>Overall discount</span>
+              <strong className="text-emerald-700">
+                − {money(overallDiscountCents)}
               </strong>
             </div>
             <div className="summary-row current">

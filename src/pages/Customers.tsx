@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowUpRight, HandCoins, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api, body, queryString } from "../lib/api";
 import { useDebounced, useRefresh } from "../lib/hooks";
 import type { Customer, Page } from "../lib/types";
 import { money } from "../lib/format";
+import { PendingPaymentModal } from "../features/payments/PendingPaymentModal";
 import {
   Button,
   Confirm,
@@ -114,6 +115,7 @@ export default function Customers() {
     undefined,
   );
   const [deleting, setDeleting] = useState<Customer | null>(null);
+  const [paying, setPaying] = useState<Customer | null>(null);
   const refresh = useRefresh();
   const remove = useMutation({
     mutationFn: (customer: Customer) => api(`/customers/${customer._id}`, body("DELETE", {})),
@@ -194,6 +196,16 @@ export default function Customers() {
                         </td>
                         <td>
                           <div className="flex items-center gap-2">
+                            {c.balanceCents > 0 && (
+                              <button
+                                className="icon-button"
+                                title="Receive pending payment"
+                                aria-label={`Receive pending payment from ${c.name}`}
+                                onClick={() => setPaying(c)}
+                              >
+                                <HandCoins size={16} />
+                              </button>
+                            )}
                             <button
                               className="icon-button"
                               aria-label={`Edit ${c.name}`}
@@ -243,6 +255,7 @@ export default function Customers() {
       {editing !== undefined && (
         <CustomerForm customer={editing} close={() => setEditing(undefined)} />
       )}
+      {paying && <PendingPaymentModal customerId={paying._id} customerName={paying.name} balanceCents={paying.balanceCents} close={() => setPaying(null)} />}
       {deleting && <Confirm title="Delete this customer?" text={`${deleting.name} will be removed. Customers with an outstanding balance must be settled first.`} danger onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting)} pending={remove.isPending} />}
     </>
   );

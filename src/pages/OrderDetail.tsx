@@ -9,12 +9,14 @@ import {
   Plus,
   Trash2,
   Wallet,
+  HandCoins,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api, body, downloadInvoice } from "../lib/api";
 import { useRefresh } from "../lib/hooks";
 import type { Customer, Order } from "../lib/types";
 import { dateTime, money } from "../lib/format";
+import { PendingPaymentModal } from "../features/payments/PendingPaymentModal";
 import {
   Badge,
   Button,
@@ -42,6 +44,7 @@ export default function OrderDetail() {
   const [payment, setPayment] = useState(false);
   const [received, setReceived] = useState(0);
   const [confirmPayment, setConfirmPayment] = useState(false);
+  const [pendingPayment, setPendingPayment] = useState(false);
   const remove = useMutation({
     mutationFn: () =>
       api(`/orders/${id}`, body("DELETE", { version: query.data!.version })),
@@ -198,7 +201,8 @@ export default function OrderDetail() {
             <div className="invoice-totals">
               {[
                 ["Subtotal", order.subtotalCents],
-                ["Discount", -order.discountCents],
+                ["Item discounts", -(order.discountCents - (order.overallDiscountCents ?? 0))],
+                ["Overall discount", -(order.overallDiscountCents ?? 0)],
                 ["Current order amount", order.totalCents],
                 ["Previous pending at creation", order.previousPendingCents],
               ].map(([label, value]) => (
@@ -258,6 +262,11 @@ export default function OrderDetail() {
               </p>
             )}
             <p>Live balance across all orders.</p>
+            {order.isLatestForCustomer && customer.data && customer.data.balanceCents > 0 && (
+              <Button className="w-full justify-center mt-4" onClick={() => setPendingPayment(true)}>
+                <HandCoins size={16} /> Receive previous pending
+              </Button>
+            )}
             <Link
               className="text-link"
               to={`/orders?customerId=${order.customerId}`}
@@ -348,6 +357,14 @@ export default function OrderDetail() {
           onClose={() => setConfirmPayment(false)}
           onConfirm={() => pay.mutate()}
           pending={pay.isPending}
+        />
+      )}
+      {pendingPayment && customer.data && (
+        <PendingPaymentModal
+          customerId={customer.data._id}
+          customerName={customer.data.name}
+          balanceCents={customer.data.balanceCents}
+          close={() => setPendingPayment(false)}
         />
       )}
     </>
