@@ -47,6 +47,14 @@ export interface Customer {
   phone: string;
   balanceCents: number;
 }
+export interface CustomerPayment {
+  _id: string;
+  customerId: string;
+  amountCents: number;
+  balanceCents: number;
+  allocations: { orderId: string; invoiceNumber: string; amountCents: number }[];
+  createdAt: string;
+}
 export interface OrderItem {
   productId: string;
   name: string;
@@ -74,6 +82,7 @@ export interface Order {
   profitCents?: number | null;
   profitEstimated?: boolean;
   discountCents: number;
+  overallDiscountCents: number;
   totalCents: number;
   previousPendingCents: number;
   grandTotalCents: number;
@@ -85,6 +94,7 @@ export interface Order {
   updatedAt: string;
   version: number;
   statusHistory: { status: Status; at: string; receivedCents: number }[];
+  isLatestForCustomer?: boolean;
 }
 export interface Page<T> {
   data: T[];
