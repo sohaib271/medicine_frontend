@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { api } from "../lib/api";
-import type { Dashboard as DashboardData } from "../lib/types";
+import type { Dashboard as DashboardData, User } from "../lib/types";
 import { money, shortDate } from "../lib/format";
 import {
   Badge,
@@ -21,6 +21,11 @@ import {
   PageHeader,
 } from "../components/ui";
 export default function Dashboard() {
+  const user = useQuery<User>({
+    queryKey: ["me"],
+    queryFn: () => api<User>("/auth/me"),
+    staleTime: 60000,
+  });
   const query = useQuery({
     queryKey: ["dashboard"],
     queryFn: () => api<DashboardData>("/dashboard"),
@@ -31,6 +36,8 @@ export default function Dashboard() {
       <ErrorState error={query.error} retry={() => void query.refetch()} />
     );
   const data = query.data;
+  const canViewFinancials = user.data?.permissions.includes("financials:read") ?? false;
+  const financial = data as Required<DashboardData>;
   const bars = Array.from({ length: 30 }, (_, i) => {
     const day = new Date();
     day.setDate(day.getDate() - 29 + i);
@@ -38,7 +45,7 @@ export default function Dashboard() {
     return {
       key,
       label: shortDate(day.toISOString()),
-      total: data.trend.find((d) => d._id === key)?.total ?? 0,
+      total: financial.trend?.find((d) => d._id === key)?.total ?? 0,
     };
   });
   const peak = Math.max(...bars.map((b) => b.total), 1);
@@ -76,7 +83,7 @@ export default function Dashboard() {
           <span>INVENTORY. SIMPLIFIED.</span>
         </div>
       </div>
-      <section className="inventory-analytics" aria-labelledby="inventory-analytics-title">
+      {canViewFinancials && <section className="inventory-analytics" aria-labelledby="inventory-analytics-title">
         <div className="analytics-heading">
           <div>
             <h2 id="inventory-analytics-title">Inventory performance</h2>
@@ -89,45 +96,45 @@ export default function Dashboard() {
         <div className="analytics-grid">
           <div className="stat-card">
             <div className="stat-top"><span>Cost of current stock</span><span className="stat-icon blue"><Package size={19} /></span></div>
-            <strong>{money(data.stockCostCents)}</strong>
+            <strong>{money(financial.stockCostCents)}</strong>
             <small>Purchase value of inventory on hand</small>
           </div>
           <div className="stat-card">
             <div className="stat-top"><span>Sold so far</span><span className="stat-icon green"><CircleDollarSign size={19} /></span></div>
-            <strong>{money(data.lifetimeSalesCents)}</strong>
-            <small>{data.soldPacks.toLocaleString()} packs · {data.soldUnits.toLocaleString()} units</small>
+            <strong>{money(financial.lifetimeSalesCents)}</strong>
+            <small>{financial.soldPacks.toLocaleString()} packs · {financial.soldUnits.toLocaleString()} units</small>
           </div>
           <div className="stat-card">
             <div className="stat-top"><span>Amount received · all time</span><span className="stat-icon blue"><ReceiptText size={19} /></span></div>
-            <strong>{money(data.lifetimeReceivedCents)}</strong>
+            <strong>{money(financial.lifetimeReceivedCents)}</strong>
             <small>Payments collected on active invoices</small>
           </div>
           <div className="stat-card">
             <div className="stat-top"><span>Sales profit · all time</span><span className="stat-icon purple"><ArrowUpRight size={19} /></span></div>
-            <strong>{data.profitEstimated ? "~ " : ""}{money(data.netProfitCents)}</strong>
-            <small>This month: {money(data.monthlyProfitCents)}</small>
+            <strong>{financial.profitEstimated ? "~ " : ""}{money(financial.netProfitCents)}</strong>
+            <small>This month: {money(financial.monthlyProfitCents)}</small>
           </div>
           <div className="stat-card">
             <div className="stat-top"><span>Expenses · all time</span><span className="stat-icon orange"><ReceiptText size={19} /></span></div>
-            <strong>{money(data.expenseCents)}</strong>
-            <small>This month: {money(data.monthlyExpenseCents)}</small>
+            <strong>{money(financial.expenseCents)}</strong>
+            <small>This month: {money(financial.monthlyExpenseCents)}</small>
           </div>
           <div className="stat-card">
             <div className="stat-top"><span>Profit after expenses</span><span className="stat-icon green"><CircleDollarSign size={19} /></span></div>
-            <strong>{data.profitEstimated ? "~ " : ""}{money(data.profitAfterExpenseCents)}</strong>
-            <small>This month: {money(data.monthlyProfitAfterExpenseCents)}</small>
+            <strong>{financial.profitEstimated ? "~ " : ""}{money(financial.profitAfterExpenseCents)}</strong>
+            <small>This month: {money(financial.monthlyProfitAfterExpenseCents)}</small>
           </div>
         </div>
-      </section>
+      </section>}
       <div className="stats-grid">
         {[
-          {
+          ...(canViewFinancials ? [{
             label: "Sales · last 30 days",
-            value: money(data.salesCents),
-            detail: `${data.orderCount} orders created`,
+            value: money(financial.salesCents),
+            detail: `${financial.orderCount} orders created`,
             icon: CircleDollarSign,
             tone: "green",
-          },
+          }] : []),
           {
             label: "Medicines in catalog",
             value: data.productCount.toLocaleString(),
@@ -135,13 +142,13 @@ export default function Dashboard() {
             icon: Package,
             tone: "blue",
           },
-          {
+          ...(canViewFinancials ? [{
             label: "Customer outstanding",
-            value: money(data.balanceCents),
+            value: money(financial.balanceCents),
             detail: "Across all unpaid orders",
             icon: ReceiptText,
             tone: "orange",
-          },
+          }] : []),
           {
             label: "Your customers",
             value: data.customerCount.toLocaleString(),
@@ -163,7 +170,7 @@ export default function Dashboard() {
         ))}
       </div>
       <div className="dashboard-grid">
-        <section className="panel">
+        {canViewFinancials && <section className="panel">
           <div className="panel-heading">
             <div>
               <h2>Sales overview</h2>
@@ -172,13 +179,13 @@ export default function Dashboard() {
             <span className="soft-tag">Last 30 days</span>
           </div>
           <div className="chart-summary">
-            <strong>{money(data.salesCents)}</strong>
+            <strong>{money(financial.salesCents)}</strong>
             <span>total sales</span>
           </div>
           <div
             className="bar-chart"
             role="img"
-            aria-label={`Sales for the last 30 days: ${money(data.salesCents)}`}
+            aria-label={`Sales for the last 30 days: ${money(financial.salesCents)}`}
           >
             <div className="chart-grid" />
             {bars.map((b) => (
@@ -199,12 +206,12 @@ export default function Dashboard() {
             <span>{bars[14].label}</span>
             <span>{bars[29].label}</span>
           </div>
-          {!data.salesCents && (
+          {!financial.salesCents && (
             <p className="chart-empty">
               Your sales will appear here as you create orders.
             </p>
           )}
-        </section>
+        </section>}
         <section className="panel">
           <div className="panel-heading">
             <div>
@@ -271,7 +278,7 @@ export default function Dashboard() {
                   <th>Invoice</th>
                   <th>Customer</th>
                   <th>Date</th>
-                  <th>Amount</th>
+                  {canViewFinancials && <th>Amount</th>}
                   <th>Status</th>
                   <th />
                 </tr>
@@ -286,7 +293,7 @@ export default function Dashboard() {
                     </td>
                     <td>{o.customerName}</td>
                     <td className="text-muted">{shortDate(o.createdAt)}</td>
-                    <td className="font-semibold">{money(o.totalCents)}</td>
+                    {canViewFinancials && <td className="font-semibold">{money(o.totalCents)}</td>}
                     <td>
                       <Badge status={o.status} />
                     </td>

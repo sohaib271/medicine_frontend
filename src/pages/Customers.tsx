@@ -31,6 +31,7 @@ function CustomerForm({
     name: customer?.name ?? "",
     phone: customer?.phone ?? "",
     address: customer?.address ?? "",
+    licenseNumber: customer?.licenseNumber ?? "",
   });
   const refresh = useRefresh();
   const save = useMutation({
@@ -87,6 +88,14 @@ function CustomerForm({
               placeholder="Street, area, city"
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
+            />
+          </Field>
+          <Field label="License number">
+            <input
+              maxLength={100}
+              placeholder="Customer drug sale license number"
+              value={form.licenseNumber}
+              onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })}
             />
           </Field>
         </div>
