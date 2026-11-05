@@ -46,6 +46,7 @@ export interface Customer {
   address: string;
   phone: string;
   balanceCents: number;
+  licenseNumber?: string;
 }
 export interface CustomerPayment {
   _id: string;
@@ -107,25 +108,25 @@ export interface Dashboard {
   productCount: number;
   lowStockCount: number;
   customerCount: number;
-  balanceCents: number;
-  salesCents: number;
-  receivedCents: number;
-  orderCount: number;
+  balanceCents?: number;
+  salesCents?: number;
+  receivedCents?: number;
+  orderCount?: number;
   lowStock: Product[];
   recentOrders: Order[];
-  trend: { _id: string; total: number }[];
-  stockCostCents: number;
-  lifetimeSalesCents: number;
-  lifetimeReceivedCents: number;
-  soldPacks: number;
-  soldUnits: number;
-  netProfitCents: number;
-  profitEstimated: boolean;
-  expenseCents: number;
-  monthlyExpenseCents: number;
-  monthlyProfitCents: number;
-  monthlyProfitAfterExpenseCents: number;
-  profitAfterExpenseCents: number;
+  trend?: { _id: string; total: number }[];
+  stockCostCents?: number;
+  lifetimeSalesCents?: number;
+  lifetimeReceivedCents?: number;
+  soldPacks?: number;
+  soldUnits?: number;
+  netProfitCents?: number;
+  profitEstimated?: boolean;
+  expenseCents?: number;
+  monthlyExpenseCents?: number;
+  monthlyProfitCents?: number;
+  monthlyProfitAfterExpenseCents?: number;
+  profitAfterExpenseCents?: number;
 }
 export interface Expense {
   _id: string;
@@ -151,4 +152,23 @@ export interface BusinessReport {
   to: string;
   lifetime: ReportMetrics;
   period: ReportMetrics;
+}
+export interface WarrantyItem extends OrderItem {}
+export interface Warranty {
+  _id: string;
+  warrantyNumber: string;
+  customerId: string;
+  customerName: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerLicenseNumber: string;
+  items: WarrantyItem[];
+  subtotalCents: number;
+  discountCents: number;
+  overallDiscountCents: number;
+  totalCents: number;
+  remarks?: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
 }

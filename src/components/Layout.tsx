@@ -14,6 +14,7 @@ import {
   Users,
   WalletCards,
   FileChartColumn,
+  ShieldPlus,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -26,8 +27,9 @@ const links = [
   { to: "/orders", label: "Orders & billing", icon: ReceiptText },
   { to: "/challans", label: "Delivery challans", icon: Truck },
   { to: "/customers", label: "Customers", icon: Users },
-  { to: "/expenses", label: "Expenses", icon: WalletCards },
-  { to: "/reports", label: "Reports", icon: FileChartColumn },
+  { to: "/expenses", label: "Expenses", icon: WalletCards, permission: "financials:read" },
+  { to: "/reports", label: "Reports", icon: FileChartColumn, permission: "financials:read" },
+  { to: "/warranties", label: "Warranties", icon: ShieldPlus },
 ];
 export function Layout({ user }: { user: User }) {
   const [open, setOpen] = useState(false);
@@ -43,8 +45,11 @@ export function Layout({ user }: { user: User }) {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const visibleLinks = links.filter(
+    (link) => !link.permission || user.permissions.includes(link.permission),
+  );
   const section =
-    links.find((l) =>
+    visibleLinks.find((l) =>
       l.to === "/"
         ? location.pathname === "/"
         : location.pathname.startsWith(l.to),
@@ -76,7 +81,7 @@ export function Layout({ user }: { user: User }) {
         </div>
         <div className="nav-label">WORKSPACE</div>
         <nav>
-          {links.map(({ to, label, icon: Icon }) => (
+          {visibleLinks.map(({ to, label, icon: Icon }) => (
             <NavLink
               end={to === "/"}
               key={to}
@@ -136,7 +141,7 @@ export function Layout({ user }: { user: User }) {
           </div>
           <div className="flex items-center gap-4">
             <span className="admin-chip">
-              <ShieldCheck size={14} /> Admin workspace
+              <ShieldCheck size={14} /> {user.role === "admin" ? "Admin" : "Operator"} workspace
             </span>
             <span className="today">
               {new Date().toLocaleDateString("en-GB", {

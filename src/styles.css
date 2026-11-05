@@ -1002,6 +1002,10 @@ tbody tr:hover {
   color: #947744;
   font-size: 10px;
 }
+.compact-picker { max-height: 210px; overflow-y: auto; }
+.warranty-lines { border: 1px solid #edf1e2; border-radius: 9px; overflow: hidden; }
+.warranty-line-fields { display: grid; grid-template-columns: .55fr 1fr 1fr 1fr 1fr; gap: 10px; align-items: end; }
+.warranty-summary { margin-left: auto; max-width: 360px; }
 .profit-value {
   color: #5d873f;
   font-weight: 650;
