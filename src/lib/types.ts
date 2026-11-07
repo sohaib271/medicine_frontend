@@ -20,6 +20,7 @@ export interface User {
 }
 export interface Product {
   company?: string;
+  batchNumber?: string;
   _id: string;
   name: string;
   type: string;
@@ -62,6 +63,7 @@ export interface OrderItem {
   type: string;
   strength: string;
   company?: string;
+  batchNumber?: string;
   quantity: number;
   quantityPerPacking: number;
   unitPriceCents: number;

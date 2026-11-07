@@ -8,7 +8,7 @@ import type { Customer, DiscountType, Page, Product, Warranty } from "../lib/typ
 import { Button, Confirm, Empty, ErrorState, Field, Loading, Modal, PageHeader, Pagination, SearchBox } from "../components/ui";
 
 type DraftLine = {
-  productId: string; name: string; strength: string; quantity: number;
+  productId: string; name: string; strength: string; batchNumber?: string; quantity: number;
   quantityPerPacking: number; unitPriceCents: number;
   discountType: DiscountType; discountValue: number;
 };
@@ -30,7 +30,7 @@ function WarrantyForm({ close }: { close: () => void }) {
   const update = (index: number, changes: Partial<DraftLine>) => setLines((current) => current.map((line, i) => i === index ? { ...line, ...changes } : line));
   const addProduct = (product: Product) => {
     if (lines.some((line) => line.productId === product._id)) return toast.info("This medicine is already included.");
-    setLines((current) => [...current, { productId: product._id, name: product.name, strength: product.strength, quantity: 1, quantityPerPacking: product.quantityPerPacking ?? 1, unitPriceCents: product.salePriceCents, discountType: product.discountType, discountValue: product.discountValue }]);
+    setLines((current) => [...current, { productId: product._id, name: product.name, strength: product.strength, batchNumber: product.batchNumber, quantity: 1, quantityPerPacking: product.quantityPerPacking ?? 1, unitPriceCents: product.salePriceCents, discountType: product.discountType, discountValue: product.discountValue }]);
   };
   const save = useMutation({
     mutationFn: () => api<Warranty>("/warranties", body("POST", {
@@ -53,7 +53,7 @@ function WarrantyForm({ close }: { close: () => void }) {
       <Field label="Find medicine"><input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search medicine name" /></Field>
       <div className="product-picker compact-picker">{products.data?.data.map((product) => <button type="button" className={`picker-item ${lines.some((line) => line.productId === product._id) ? "added" : ""}`} key={product._id} disabled={lines.some((line) => line.productId === product._id)} onClick={() => addProduct(product)}><div><strong>{product.name}</strong><small>{product.strength} · {money(product.salePriceCents)} / pack</small></div><Plus size={16} /></button>)}</div>
       <div className="warranty-lines">{lines.map((line, index) => <div className="order-line" key={line.productId}>
-        <div className="line-title"><strong>{line.name}</strong><small>{line.strength} · {line.quantityPerPacking} units per pack</small><button type="button" className="icon-button text-red-600 ml-auto" onClick={() => setLines((current) => current.filter((_, i) => i !== index))}><Trash2 size={16} /></button></div>
+        <div className="line-title"><strong>{line.name}</strong><small>{line.strength} · Batch: {line.batchNumber || "—"} · {line.quantityPerPacking} units per pack</small><button type="button" className="icon-button text-red-600 ml-auto" onClick={() => setLines((current) => current.filter((_, i) => i !== index))}><Trash2 size={16} /></button></div>
         <div className="warranty-line-fields">
           <Field label="Packs"><input required type="number" min={1} step={1} value={line.quantity} onChange={(e) => update(index, { quantity: Number(e.target.value) })} /></Field>
           <Field label="Sale price / pack"><input required type="number" min={0} step="0.01" value={line.unitPriceCents / 100} onChange={(e) => update(index, { unitPriceCents: Math.round(Number(e.target.value) * 100) })} /></Field>

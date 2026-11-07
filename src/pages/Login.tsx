@@ -22,8 +22,8 @@ export default function Login({ user }: { user?: User | null }) {
   const login = useMutation({
     mutationFn: () =>
       api<User>("/auth/login", body("POST", { email, password })),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: ["me"] });
+    onSuccess: (authenticatedUser) => {
+      client.setQueryData<User>(["me"], authenticatedUser);
       navigate("/");
     },
   });
