@@ -154,7 +154,7 @@ function ProductForm({
               }
             >
               <option value="percent">Percentage (%)</option>
-              <option value="fixed">Fixed amount (PKR / pack)</option>
+              <option value="fixed">Fixed Amount (PKR / pack)</option>
             </select>
           </Field>
           <Field
