@@ -32,7 +32,6 @@ function ProductForm({
     type: product?.type ?? "Tablet",
     strength: product?.strength ?? "",
     company: product?.company ?? "",
-    batchNumber: product?.batchNumber ?? "",
     purchasePrice: product ? product.purchasePriceCents / 100 : 0,
     salePrice: product ? product.salePriceCents / 100 : 0,
     discountType: product?.discountType ?? "percent",
@@ -111,14 +110,6 @@ function ProductForm({
               placeholder="Medicine manufacturer"
               value={form.company}
               onChange={(e) => setForm({ ...form, company: e.target.value })}
-            />
-          </Field>
-          <Field label="Batch No.">
-            <input
-              maxLength={80}
-              placeholder="e.g. B-24017"
-              value={form.batchNumber}
-              onChange={(e) => setForm({ ...form, batchNumber: e.target.value })}
             />
           </Field>
           {(["purchasePrice", "salePrice"] as const).map((key) => (

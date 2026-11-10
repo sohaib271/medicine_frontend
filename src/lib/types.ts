@@ -20,7 +20,6 @@ export interface User {
 }
 export interface Product {
   company?: string;
-  batchNumber?: string;
   _id: string;
   name: string;
   type: string;
