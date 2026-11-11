@@ -48,6 +48,8 @@ function WarrantyForm({ warranty, close }: { warranty?: Warranty; close: () => v
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!lines.length) return toast.error("Add at least one medicine.");
+    if (lines.some((line) => !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 1000000))
+      return toast.error("Number of packs must be a whole number between 1 and 1,000,000.");
     if (total < 0) return toast.error("Overall discount cannot exceed the warranty amount.");
     save.mutate();
   };
@@ -55,13 +57,14 @@ function WarrantyForm({ warranty, close }: { warranty?: Warranty; close: () => v
     <form onSubmit={submit}><div className="modal-body space-y-5">
       <Field label="Customer"><select required value={customerId} onChange={(e) => setCustomerId(e.target.value)}><option value="">Choose customer</option>{customers.data?.data.map((customer) => <option key={customer._id} value={customer._id}>{customer.name}{customer.licenseNumber ? ` · Lic: ${customer.licenseNumber}` : ""}</option>)}</select></Field>
       {selectedCustomer && <div className="info-note"><ShieldCheck size={16} /><p>License No: {selectedCustomer.licenseNumber || "Not provided — add it from Customers"}</p></div>}
+      <div className="info-note"><ShieldCheck size={16} /><p>Warranty pack quantities are for documentation only and do not change inventory stock.</p></div>
       <Field label="Find medicine"><input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search medicine name" /></Field>
       <div className="product-picker compact-picker">{products.data?.data.map((product) => <button type="button" className={`picker-item ${lines.some((line) => line.productId === product._id) ? "added" : ""}`} key={product._id} disabled={lines.some((line) => line.productId === product._id)} onClick={() => addProduct(product)}><div><strong>{product.name}</strong><small>{product.strength} · {money(product.salePriceCents)} / pack</small></div><Plus size={16} /></button>)}</div>
       <div className="warranty-lines">{lines.map((line, index) => <div className="order-line" key={line.productId}>
         <div className="line-title"><strong>{line.name}</strong><small>{line.strength} · {line.quantityPerPacking} units per pack</small><button type="button" className="icon-button text-red-600 ml-auto" onClick={() => setLines((current) => current.filter((_, i) => i !== index))}><Trash2 size={16} /></button></div>
         <div className="warranty-line-fields">
           <Field label="Batch No."><input required maxLength={80} value={line.batchNumber} placeholder="e.g. B-24017" onChange={(e) => update(index, { batchNumber: e.target.value })} /></Field>
-          <Field label="Packs"><input required type="number" min={1} step={1} value={line.quantity} onChange={(e) => update(index, { quantity: Number(e.target.value) })} /></Field>
+          <Field label="Number of packs"><input required type="number" min={1} max={1000000} step={1} value={line.quantity} onChange={(e) => update(index, { quantity: Number(e.target.value) })} /></Field>
           <Field label="Sale price / pack"><input required type="number" min={0} step="0.01" value={line.unitPriceCents / 100} onChange={(e) => update(index, { unitPriceCents: Math.round(Number(e.target.value) * 100) })} /></Field>
           <Field label="Discount type"><select value={line.discountType} onChange={(e) => update(index, { discountType: e.target.value as DiscountType, discountValue: 0 })}><option value="percent">Percentage</option><option value="fixed">Fixed PKR</option></select></Field>
           <Field label="Discount / pack"><input required type="number" min={0} step="0.01" max={line.discountType === "percent" ? 100 : line.unitPriceCents / 100} value={line.discountValue} onChange={(e) => update(index, { discountValue: Number(e.target.value) })} /></Field>
